@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using FinanceApp.Infrastructure.Data;
 using FinanceApp.Web.Components;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -5,6 +7,11 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// Adding the DbContext to the service container with a connection string from appsettings.json
+builder.Services.AddDbContext<FinanceDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"),
+    b => b.MigrationsAssembly("FinanceApp.Infrastructure.Data")));
 
 var app = builder.Build();
 
