@@ -12,7 +12,7 @@ namespace FinanceApp.Domain.Models
         public decimal Balance { get; set; }
         public AccountType AccountType { get; set; }
 
-        // Navigation property for related transactions
+        // Transactions related to this account
         public List<Transaction> Transactions { get; set; } = new();
     }
 }

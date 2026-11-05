@@ -1,7 +1,196 @@
 ﻿@page "/"
 
-<PageTitle>Home</PageTitle>
+<!-- Header Controls -->
+<header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-white">Dashboard</h1>
+        <p class="text-sm text-slate-400">Personal Account & Spending Tracker</p>
+    </div>
 
-<h1>Hello, world!</h1>
+    <!-- View Switcher & Month Dropdown -->
+    <div class="flex flex-wrap items-center gap-3">
+        <div class="bg-slate-900 p-1 rounded-xl border border-slate-800 flex items-center">
+            <button @onclick="@(() => SetViewMode("monthly"))"
+                    class="px-4 py-1.5 text-sm font-medium rounded-lg transition-all @(currentMode == "monthly" ? "bg-purple-600 text-white shadow-md" : "text-slate-400 hover:text-white")">
+                Monthly View
+            </button>
+            <button @onclick="@(() => SetViewMode("yearly"))"
+                    class="px-4 py-1.5 text-sm font-medium rounded-lg transition-all @(currentMode == "yearly" ? "bg-purple-600 text-white shadow-md" : "text-slate-400 hover:text-white")">
+                Yearly View
+            </button>
+        </div>
 
-Welcome to your new app.
+        @if (currentMode == "monthly")
+        {
+            <select @bind="selectedMonthIndex" @bind:after="UpdateMetrics" class="bg-slate-900 border border-slate-800 text-white text-sm rounded-xl px-3 py-2 cursor-pointer font-medium">
+                @for (int i = 0; i < rawData.Count; i++)
+                {
+                    <option value="@i">@rawData[i].Month</option>
+                }
+            </select>
+        }
+    </div>
+</header>
+
+<!-- Metric Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+        <span class="text-xs font-semibold text-slate-400 uppercase">Income</span>
+        <div class="text-2xl font-bold text-emerald-400 mt-1">@FormatGBP(displayIncome)</div>
+    </div>
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+        <span class="text-xs font-semibold text-slate-400 uppercase">Expense</span>
+        <div class="text-2xl font-bold text-rose-400 mt-1">@FormatGBP(displayExpense)</div>
+    </div>
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+        <span class="text-xs font-semibold text-slate-400 uppercase">Actual Balance</span>
+        <div class="text-2xl font-bold text-purple-400 mt-1">@FormatGBP(displayActualBalance)</div>
+    </div>
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+        <span class="text-xs font-semibold text-slate-400 uppercase">Credit Debt</span>
+        <div class="text-2xl font-bold text-amber-400 mt-1">@FormatGBP(displayCreditDebt)</div>
+    </div>
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+        <span class="text-xs font-semibold text-slate-400 uppercase">Outstanding</span>
+        <div class="text-2xl font-bold text-blue-400 mt-1">@FormatGBP(displayOutstanding)</div>
+    </div>
+</div>
+
+<!-- Account & Cash Holdings Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    @foreach (var account in currentAccounts)
+    {
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
+            <div>
+                <span class="text-xs font-semibold text-slate-400 uppercase block">@account.Key</span>
+                <div class="text-xl font-bold text-white mt-0.5">@FormatGBP(account.Value)</div>
+            </div>
+            <div class="w-8 h-8 rounded-lg bg-purple-600/20 text-purple-400 flex items-center justify-center font-bold">
+                @account.Key.Substring(0, 1)
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Ledger Data Table -->
+<div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 overflow-x-auto">
+    <h3 class="text-base font-semibold text-white mb-4">Ledger Data</h3>
+    <table class="w-full text-left border-collapse text-sm">
+        <thead>
+            <tr class="border-b border-slate-800 text-slate-400 uppercase text-xs">
+                <th class="p-3">Month</th>
+                <th class="p-3">Income</th>
+                <th class="p-3">Expense</th>
+                <th class="p-3">Bal (Expected)</th>
+                <th class="p-3">Actual Balance</th>
+
+                @foreach (var bankName in allBankNames)
+                {
+                    <th class="p-3">@bankName</th>
+                }
+
+                <th class="p-3">Credit Debt</th>
+                <th class="p-3">Outstanding</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-800/60">
+            @for (int i = 0; i < rawData.Count; i++)
+            {
+                var row = rawData[i];
+                bool isSelected = (currentMode == "monthly" && selectedMonthIndex == i);
+                <tr class="@(isSelected ? "bg-purple-950/30 text-purple-300 font-medium" : "text-slate-300 hover:bg-slate-800/40")">
+                    <td class="p-3 font-semibold">@row.Month</td>
+                    <td class="p-3 text-emerald-400">@FormatGBP(row.Income)</td>
+                    <td class="p-3 text-rose-400">@FormatGBP(row.Expense)</td>
+                    <td class="p-3">@FormatGBP(row.ExpBalance)</td>
+                    <td class="p-3 text-purple-400">@FormatGBP(row.ActBalance)</td>
+
+                    @foreach (var bankName in allBankNames)
+                    {
+                        var balance = row.Accounts.ContainsKey(bankName) ? row.Accounts[bankName] : 0.00m;
+                        <td class="p-3">@FormatGBP(balance)</td>
+                    }
+
+                    <td class="p-3 text-amber-400">@FormatGBP(row.CreditDebt)</td>
+                    <td class="p-3 text-blue-400">@FormatGBP(row.Outstanding)</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private string currentMode = "monthly";
+    private int selectedMonthIndex = 10; // Default Nov-26
+    private decimal displayIncome;
+    private decimal displayExpense;
+    private decimal displayActualBalance;
+    private decimal displayCreditDebt;
+    private decimal displayOutstanding;
+
+    public class FinanceRecord
+    {
+        public string Month { get; set; } = "";
+        public decimal Income { get; set; }
+        public decimal Expense { get; set; }
+        public decimal ExpBalance { get; set; }
+        public decimal ActBalance { get; set; }
+        public decimal CreditDebt { get; set; }
+        public decimal Outstanding { get; set; }
+        public Dictionary<string, decimal> Accounts { get; set; } = new();
+    }
+
+    private List<FinanceRecord> rawData = new()
+    {
+        new() { Month = "Jan-26", Income = 1722.52m, Expense = 1519.35m, ExpBalance = 3812.90m, ActBalance = 3812.90m, CreditDebt = 165.83m, Accounts = new() { { "Barclays", 694.48m }, { "Monzo", 70.13m }, { "Savings", 3154.12m }, { "Cash", 60.00m } } },
+        new() { Month = "Feb-26", Income = 1307.32m, Expense = 2110.95m, ExpBalance = 3009.27m, ActBalance = 3009.27m, CreditDebt = 656.87m, Accounts = new() { { "Barclays", 326.10m }, { "Monzo", 216.59m }, { "Savings", 3063.45m }, { "Cash", 60.00m } } },
+        new() { Month = "Mar-26", Income = 2071.95m, Expense = 2795.55m, ExpBalance = 2285.67m, ActBalance = 2285.67m, CreditDebt = 532.10m, Accounts = new() { { "Barclays", 650.28m }, { "Monzo", 185.17m }, { "Savings", 1972.32m }, { "Cash", 10.00m } } },
+        new() { Month = "Apr-26", Income = 1525.71m, Expense = 1546.32m, ExpBalance = 2265.06m, ActBalance = 2265.06m, CreditDebt = 119.46m, Accounts = new() { { "Barclays", 220.98m }, { "Monzo", 173.50m }, { "Savings", 1980.04m }, { "Cash", 10.00m } } },
+        new() { Month = "May-26", Income = 1472.28m, Expense = 1527.59m, ExpBalance = 2209.75m, ActBalance = 2209.75m, CreditDebt = 101.99m, Accounts = new() { { "Barclays", 39.21m }, { "Monzo", 176.73m }, { "Savings", 2085.80m }, { "Cash", 10.00m } } },
+        new() { Month = "Jun-26", Income = 1017.96m, Expense = 1040.48m, ExpBalance = 2187.23m, ActBalance = 2187.23m, CreditDebt = 88.43m, Accounts = new() { { "Barclays", 24.48m }, { "Monzo", 149.31m }, { "Savings", 2091.87m }, { "Cash", 10.00m } } },
+        new() { Month = "Jul-26", Income = 2714.28m, Expense = 3008.22m, ExpBalance = 1893.29m, ActBalance = 1893.29m, CreditDebt = 2439.89m, Accounts = new() { { "Barclays", 491.40m }, { "Monzo", 203.83m }, { "Savings", 3497.95m }, { "Cash", 140.00m } } },
+        new() { Month = "Aug-26", Income = 1016.63m, Expense = 1433.74m, ExpBalance = 1476.18m, ActBalance = 1476.18m, CreditDebt = 759.74m, Accounts = new() { { "Barclays", 666.93m }, { "Monzo", 36.49m }, { "Savings", 1497.50m }, { "Cash", 35.00m } } },
+        new() { Month = "Sep-26", Income = 482.41m, Expense = 658.60m, ExpBalance = 1299.99m, ActBalance = 1299.99m, CreditDebt = 537.93m, Accounts = new() { { "Barclays", 357.50m }, { "Monzo", 166.95m }, { "Savings", 1283.47m }, { "Cash", 30.00m } } },
+        new() { Month = "Oct-26", Income = 1193.82m, Expense = 449.94m, ExpBalance = 2043.87m, ActBalance = 2043.87m, CreditDebt = 188.50m, Accounts = new() { { "Barclays", 6.50m }, { "Monzo", 212.52m }, { "Savings", 1988.35m }, { "Cash", 25.00m } } },
+        new() { Month = "Nov-26", Income = 0.86m, Expense = 84.47m, ExpBalance = 1960.26m, ActBalance = 2019.21m, CreditDebt = -58.95m, Outstanding = 58.95m, Accounts = new() { { "Barclays", 0.00m }, { "Monzo", 0.00m }, { "Savings", 1989.21m }, { "Cash", 30.00m } } },
+        new() { Month = "Dec-26", Income = 0.00m, Expense = 0.00m, ExpBalance = 2019.21m, ActBalance = 2019.21m, CreditDebt = 0.00m, Outstanding = 0.00m, Accounts = new() { { "Barclays", 0.00m }, { "Monzo", 0.00m }, { "Savings", 1989.21m }, { "Cash", 30.00m } } }
+    };
+
+    private List<string> allBankNames => rawData.SelectMany(x => x.Accounts.Keys).Distinct().ToList();
+    private Dictionary<string, decimal> currentAccounts => rawData[selectedMonthIndex].Accounts;
+
+    protected override void OnInitialized()
+    {
+        UpdateMetrics();
+    }
+
+    private void SetViewMode(string mode)
+    {
+        currentMode = mode;
+        UpdateMetrics();
+    }
+
+    private void UpdateMetrics()
+    {
+        var current = rawData[selectedMonthIndex];
+
+        if (currentMode == "monthly")
+        {
+            displayIncome = current.Income;
+            displayExpense = current.Expense;
+            displayActualBalance = current.ActBalance;
+            displayCreditDebt = current.CreditDebt;
+            displayOutstanding = current.Outstanding;
+        }
+        else
+        {
+            displayIncome = rawData.Sum(x => x.Income);
+            displayExpense = rawData.Sum(x => x.Expense);
+            displayActualBalance = current.ActBalance;
+            displayCreditDebt = current.CreditDebt;
+            displayOutstanding = current.Outstanding;
+        }
+    }
+
+    private string FormatGBP(decimal amount) => (amount < 0 ? "-£" : "£") + Math.Abs(amount).ToString("N2");
+}
