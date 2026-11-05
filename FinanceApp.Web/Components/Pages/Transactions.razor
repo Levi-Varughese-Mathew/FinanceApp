@@ -4,10 +4,10 @@
 @using FinanceApp.Infrastructure.Services
 @inject TransactionService TransactionService //Getting the object of the TransactionService class to use its methods
 
-<h3>Transactions</h3>
+<h3>Coming Soon</h3>
 
 
-@if (transactions == null)
+@* @if (transactions == null)
 {
     <p>Loading accounts...</p>
 }
@@ -44,4 +44,4 @@ else
     {
         transactions = await TransactionService.GetAllTransactionsAsync();
     }
-}
+} *@
