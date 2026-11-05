@@ -67,5 +67,37 @@ namespace FinanceApp.Infrastructure.Services
                 await _context.SaveChangesAsync();
             }
         }
+
+
+        // Getting the expenses for the month of a specific year (month and year are passed as parameters)
+        // Default values for month and year are set to the current month and year if not provided.
+        public async Task<List<Transaction>> GetExpensesForMonthAsync(int? month = null, int? year = null)
+        {
+            int m = month ?? DateTime.Now.Month;
+            int y = year ?? DateTime.Now.Year;
+
+            var startDate = new DateTime(y, m, 1);
+            var endDate = startDate.AddMonths(1); // First day of the *next* month
+
+            return await _context.Transactions
+                .Where(t => t.Date >= startDate && t.Date < endDate)
+                .Where(t => t.Type == Domain.Enums.TransactionType.Expense)
+                .ToListAsync();
+        }
+
+        // Getting income for the specified month and year (defaulting to the current month and year if not provided)
+        public async Task<List<Transaction>> GetIncomeForMonthAsync(int? month = null, int? year = null)
+        {
+            int m = month ?? DateTime.Now.Month;
+            int y = year ?? DateTime.Now.Year;
+
+            var startDate = new DateTime(y, m, 1);
+            var endDate = startDate.AddMonths(1); // First day of the *next* month
+
+            return await _context.Transactions
+                .Where(t => t.Date >= startDate && t.Date < endDate)
+                .Where(t => t.Type == Domain.Enums.TransactionType.Income)
+                .ToListAsync();
+        }
     }
 }

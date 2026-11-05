@@ -1,7 +1,49 @@
 ﻿@page "/expense"
+@using FinanceApp.Domain.Models
+@using FinanceApp.Infrastructure.Data
+@* Importing the TransactionService class from the Infrastructure project to use its methods *@
+@using FinanceApp.Infrastructure.Services; 
+@* Getting the object of the TransactionService class to use its methods *@
+@inject TransactionService TransactionService 
+
 
 <h3>Expense</h3>
 
-@code {
+@if (expenses == null)
+{
+    <p>Loading accounts...</p>
+}
+else if (!expenses.Any())
+{
+    <p>No accounts found yet.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Type</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var transaction in expenses)
+            {
+                <tr>
+                    <td>@transaction.Date</td>
+                    <td>@transaction.Description</td>
+                    <td>£@transaction.Amount</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
 
+@code {
+    private List<Transaction> expenses = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        expenses = await TransactionService.GetExpensesForMonthAsync();
+    }
 }
