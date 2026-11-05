@@ -9,11 +9,19 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 // Adding the DbContext to the service container with a connection string from appsettings.json
-builder.Services.AddDbContext<FinanceDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"),
-    b => b.MigrationsAssembly("FinanceApp.Infrastructure.Data")));
+builder.Services.AddDbContext<FinanceDbContext>(
+    options => options.UseSqlite(
+        builder.Configuration.GetConnectionString("DefaultConnection"),b => b.MigrationsAssembly("FinanceApp.Infrastructure")
+        )
+    );
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<FinanceDbContext>();
+    dbContext.Database.Migrate(); // Ensures the creation of the db and also applies any pending migrations
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
