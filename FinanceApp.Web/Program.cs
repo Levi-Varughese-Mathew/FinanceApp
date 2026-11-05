@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using FinanceApp.Infrastructure.Data;
+using FinanceApp.Infrastructure.Services;
 using FinanceApp.Web.Components;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,6 +15,9 @@ builder.Services.AddDbContext<FinanceDbContext>(
         builder.Configuration.GetConnectionString("DefaultConnection"),b => b.MigrationsAssembly("FinanceApp.Infrastructure")
         )
     );
+
+// Adding the services
+builder.Services.AddScoped<AccountService>(); //Accounts service
 
 var app = builder.Build();
 

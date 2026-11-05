@@ -1,0 +1,46 @@
+﻿@page "/accounts"
+@using FinanceApp.Domain.Models
+@using FinanceApp.Infrastructure.Data
+@using FinanceApp.Infrastructure.Services
+@inject AccountService AccountService
+
+<h3>Accounts</h3>
+
+
+@if (accounts == null)
+{
+    <p>Loading accounts...</p>
+}
+else if (!accounts.Any())
+{
+    <p>No accounts found yet.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Type</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var account in accounts)
+            {
+                <tr>
+                    <td>@account.Name</td>
+                    <td>@account.AccountType</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Account> accounts = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        accounts = await AccountService.GetAllAccountsAsync();
+    }
+}
