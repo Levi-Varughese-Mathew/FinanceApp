@@ -426,3 +426,9 @@ FodyWeavers.xsd
 
 # Official VS Code C# Dev Kit Extension exclusion
 #*.lscache
+
+# Ignores the database files created by the Visual Studio Live Share extension
+# SQLite database files
+*.db
+*.db-shm
+*.db-wal
