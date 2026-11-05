@@ -1,0 +1,47 @@
+﻿@page "/transactions"
+@using FinanceApp.Domain.Models
+@using FinanceApp.Infrastructure.Data
+@using FinanceApp.Infrastructure.Services
+@inject TransactionService TransactionService //Getting the object of the TransactionService class to use its methods
+
+<h3>Transactions</h3>
+
+
+@if (transactions == null)
+{
+    <p>Loading accounts...</p>
+}
+else if (!transactions.Any())
+{
+    <p>No accounts found yet.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Type</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var transaction in transactions)
+            {
+                <tr>
+                    <td>@transaction.Date</td>
+                    <td>@transaction.Description</td>
+                    <td>£@transaction.Amount</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Transaction> transactions = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        transactions = await TransactionService.GetAllTransactionsAsync();
+    }
+}
