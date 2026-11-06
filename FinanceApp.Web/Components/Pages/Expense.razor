@@ -1,49 +1,188 @@
 ﻿@page "/expense"
 @using FinanceApp.Domain.Models
 @using FinanceApp.Infrastructure.Data
-@* Importing the TransactionService class from the Infrastructure project to use its methods *@
-@using FinanceApp.Infrastructure.Services; 
-@* Getting the object of the TransactionService class to use its methods *@
-@inject TransactionService TransactionService 
+@using FinanceApp.Infrastructure.Services
 
+@inject TransactionService TransactionService
 
-<h3>Expense</h3>
+<div class="space-y-6 max-w-full overflow-hidden">
+    <!-- Header & Action Button -->
+    <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-white">Expenses</h1>
+            <p class="text-sm text-slate-400">View and manage monthly expenses</p>
+        </div>
+        <button @onclick="OpenAddModal" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2 rounded-xl text-sm transition-all shadow-lg shadow-emerald-900/30 flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            Add Expense
+        </button>
+    </header>
 
-@if (expenses == null)
+    <!-- Content Card Container with Responsive Min-Width & Scroll -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl overflow-x-auto">
+        @if (expenses == null)
+        {
+            <p class="text-slate-400 py-4">Loading expenses...</p>
+        }
+        else if (!expenses.Any())
+        {
+            <p class="text-slate-400 py-4">No expenses found for this month.</p>
+        }
+        else
+        {
+            <table class="w-full text-left border-collapse text-sm min-w-[650px]">
+                <thead>
+                    <tr class="border-b border-slate-800 text-slate-400 uppercase text-xs">
+                        <th class="p-3">Date</th>
+                        <th class="p-3">Description</th>
+                        <th class="p-3 text-right">Amount</th>
+                        <th class="p-3 text-center w-12">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/60">
+                    @foreach (var transaction in expenses)
+                    {
+                        bool isExpanded = expandedRowId == transaction.Id; // Assuming your Transaction model has an 'Id' property
+
+                        <!-- Main Row (Clickable) -->
+                        <tr @onclick="() => ToggleRow(transaction.Id)" class="cursor-pointer text-slate-300 hover:bg-slate-800/40 transition-colors @(isExpanded ? "bg-slate-800/50" : "")">
+                            <td class="p-3 font-semibold">@transaction.Date.ToString("dd/MM/yyyy")</td>
+                            <td class="p-3 font-medium text-white">@transaction.Description</td>
+                            <td class="p-3 text-right text-rose-400 font-medium">£@transaction.Amount.ToString("N2")</td>
+                            <td class="p-3 text-center text-slate-500">
+                                <svg class="w-4 h-4 transform transition-transform @(isExpanded ? "rotate-180" : "") inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </td>
+                        </tr>
+
+                        <!-- Expandable Details Accordion Row -->
+                        @if (isExpanded)
+                        {
+                            <tr class="bg-slate-950/40">
+                                <td colspan="4" class="p-4">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-slate-400 bg-slate-900/80 border border-slate-800/80 p-4 rounded-xl">
+                                        <div>
+                                            <span class="block uppercase font-semibold text-slate-500">Account / Source</span>
+                                            <span class="text-white font-medium text-sm mt-0.5 block">@(string.IsNullOrEmpty(transaction.Account.Name) ? "Default Account" : transaction.Account.Name)</span>
+                                        </div>
+                                        <div>
+                                            <span class="block uppercase font-semibold text-slate-500">Notes / Remarks</span>
+                                            <span class="text-slate-300 text-sm mt-0.5 block">@(string.IsNullOrEmpty(transaction.Notes) ? "No additional notes provided." : transaction.Notes)</span>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+<!-- Add Expense Modal Dialog -->
+@if (isModalOpen)
 {
-    <p>Loading accounts...</p>
-}
-else if (!expenses.Any())
-{
-    <p>No accounts found yet.</p>
-}
-else
-{
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Type</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var transaction in expenses)
-            {
-                <tr>
-                    <td>@transaction.Date</td>
-                    <td>@transaction.Description</td>
-                    <td>£@transaction.Amount</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-6">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+                <h3 class="text-lg font-bold text-white">Add New Expense</h3>
+                <button @onclick="CloseAddModal" class="text-slate-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <!-- Form Inputs -->
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Description</label>
+                    <input type="text" @bind="newExpense.Description" placeholder="e.g., Grocery shopping" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500" />
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Amount (£)</label>
+                        <input type="number" step="0.01" @bind="newExpense.Amount" placeholder="0.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Date</label>
+                        <input type="date" @bind="newExpense.Date" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500" />
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Account</label>
+                    <select @bind="newExpense.AccountName" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 cursor-pointer">
+                        <option value="Barclays">Barclays</option>
+                        <option value="Monzo">Monzo</option>
+                        <option value="Savings">Savings</option>
+                        <option value="Cash">Cash</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Notes (Optional)</label>
+                    <textarea @bind="newExpense.Notes" rows="2" placeholder="Add any details..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 resize-none"></textarea>
+                </div>
+            </div>
+
+            <!-- Modal Actions -->
+            <div class="flex justify-end gap-3 pt-2">
+                <button @onclick="CloseAddModal" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
+                    Cancel
+                </button>
+                <button @onclick="SaveExpense" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-5 py-2 rounded-xl text-sm transition-all shadow-lg shadow-emerald-900/30">
+                    Save Expense
+                </button>
+            </div>
+        </div>
+    </div>
 }
 
 @code {
-    private List<Transaction> expenses = default!;
+    private List<Transaction>? expenses;
+    private int? expandedRowId = null;
+    private bool isModalOpen = false;
+
+    // Temporary model bound to the add form
+    private TransactionModelViewModel newExpense = new();
+
+    public class TransactionModelViewModel
+    {
+        public string Description { get; set; } = "";
+        public decimal Amount { get; set; }
+        public DateTime Date { get; set; } = DateTime.Today;
+        public string AccountName { get; set; } = "Barclays";
+        public string Notes { get; set; } = "";
+    }
 
     protected override async Task OnInitializedAsync()
     {
+        expenses = await TransactionService.GetExpensesForMonthAsync();
+    }
+
+    private void ToggleRow(int id)
+    {
+        if (expandedRowId == id)
+            expandedRowId = null;
+        else
+            expandedRowId = id;
+    }
+
+    private void OpenAddModal()
+    {
+        newExpense = new TransactionModelViewModel { Date = DateTime.Today };
+        isModalOpen = true;
+    }
+
+    private void CloseAddModal()
+    {
+        isModalOpen = false;
+    }
+
+    private async Task SaveExpense()
+    {
+        // TODO: Hook up your database insertion service here when ready.
+        // e.g., await TransactionService.AddExpenseAsync(newExpense);
+
+        isModalOpen = false;
+        // Refresh your list here if needed
         expenses = await TransactionService.GetExpensesForMonthAsync();
     }
 }
