@@ -4,6 +4,7 @@
 @using FinanceApp.Infrastructure.Data
 @using FinanceApp.Infrastructure.Services
 
+@inject AccountService AccountService
 @inject TransactionService TransactionService
 
 <div class="space-y-6 max-w-full overflow-hidden">
@@ -113,14 +114,21 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Account</label>
-                    <select @bind="newExpense.Account" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 cursor-pointer">
+                    <select @bind="newExpense.AccountId" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 cursor-pointer">
                         
                         @* Get dynamic account names from the database or service in the future. For now, hardcoded options are used. *@
-                        
-                        <option value="1">Barclays</option>
+                        @if (accounts != null && accounts.Any())
+                        {
+                            @foreach (var account in accounts)
+                                { <option value="@account.Id">@account.Name</option> }
+                        }
+                        else { <option disabled>No accounts available</option> }
+                        )
+
+                        @* <option value="1">Barclays</option>
                         <option value="2">Monzo</option>
                         <option value="3">Savings</option>
-                        <option value="4">Cash</option>
+                        <option value="4">Cash</option> *@
 
                     </select>
                 </div>
@@ -145,6 +153,7 @@
 
 @code {
     private List<Transaction>? expenses;
+    private List<Account>? accounts; // This will hold the list of accounts fetched from the AccountService. It is used to populate the dropdown in the add expense modal.
     private int? expandedRowId = null;
     private bool isModalOpen = false;
 
@@ -163,6 +172,7 @@
     protected override async Task OnInitializedAsync()
     {
         expenses = await TransactionService.GetExpensesForMonthAsync();
+        accounts = await AccountService.GetAllAccountsAsync(); // Fetch accounts for the dropdown
     }
 
     // Toggle the expanded state of a row based on its ID. If the row is already expanded, collapse it; otherwise, expand it.

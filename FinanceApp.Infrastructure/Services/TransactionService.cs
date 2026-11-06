@@ -21,7 +21,10 @@ namespace FinanceApp.Infrastructure.Services
         // Getting all the transactions
         public async Task<List<Transaction>> GetAllTransactionsAsync()
         {
-            return await _context.Transactions.ToListAsync();
+            return await _context.Transactions
+                .Include(t => t.Account) // To get the account details associated with each transaction
+                .Include(t => t.Category) // To get the category details associated with each transaction
+                .ToListAsync();
         }
 
         // Getting filtered transactions based
@@ -40,7 +43,10 @@ namespace FinanceApp.Infrastructure.Services
             {
                 query = query.Where(t => t.Date <= endDate.Value);
             }
-            return await query.ToListAsync();
+            return await query
+                .Include(t => t.Account) // To get the account details associated with each transaction
+                .Include(t => t.Category) // To get the category details associated with each transaction
+                .ToListAsync();
         }
 
         // Add a new transaction
@@ -80,6 +86,8 @@ namespace FinanceApp.Infrastructure.Services
             var endDate = startDate.AddMonths(1); // First day of the *next* month
 
             return await _context.Transactions
+                .Include(t => t.Account) // To get the account details associated with each transaction
+                .Include(t => t.Category) // To get the category details associated with each transaction
                 .Where(t => t.Date >= startDate && t.Date < endDate)
                 .Where(t => t.Type == Domain.Enums.TransactionType.Expense)
                 .ToListAsync();
@@ -95,6 +103,8 @@ namespace FinanceApp.Infrastructure.Services
             var endDate = startDate.AddMonths(1); // First day of the *next* month
 
             return await _context.Transactions
+                .Include(t => t.Account) // To get the account details associated with each transaction
+                .Include(t => t.Category) // To get the category details associated with each transaction
                 .Where(t => t.Date >= startDate && t.Date < endDate)
                 .Where(t => t.Type == Domain.Enums.TransactionType.Income)
                 .ToListAsync();
