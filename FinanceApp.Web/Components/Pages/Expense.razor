@@ -244,9 +244,13 @@
             Amount = expense.Amount,
             Date = expense.Date,
             AccountId = expense.AccountId,
+            Account = expense.Account,
+            CategoryId = expense.CategoryId,
+            Category = expense.Category,
             Notes = expense.Notes,
             Type = Domain.Enums.TransactionType.Expense
         };
+
         isEditing = true; // Set the flag to indicate that we are in edit mode
         isModalOpen = true;
     }
@@ -271,14 +275,25 @@
         expenseToDelete = null; // Reset the expense to delete when closing the modal
     }
 
+    // Method to save the expense, either by adding a new one or updating an existing one based on the isEditing flag. After saving, it closes the modal and refreshes the list of expenses.
     private async Task SaveExpense()
     {
-        // TODO: Hook up your database insertion service here when ready.
-        // e.g., await TransactionService.AddExpenseAsync(activeExpense);
+        if (isEditing)
+        {
+            // If editing, update the existing expense; otherwise, add a new expense
+            await TransactionService.UpdateTransactionAsync(activeExpense);
+        }
+        else
+        {
+            // If adding a new expense, call the service to add it.
+            await TransactionService.AddTransactionAsync(activeExpense);
+        }
+
 
         isModalOpen = false;
         // Refresh your list here if needed
-        expenses = await TransactionService.GetExpensesForMonthAsync();
+        await LoadData();
+        // expenses = await TransactionService.GetExpensesForMonthAsync();
     }
 
     // Method to delete the expense after user confirmation
@@ -287,9 +302,10 @@
         if (expenseToDelete != null)
         {
             // Delete the expense using the service
+            await TransactionService.DeleteTransactionAsync(expenseToDelete.Id);
 
             // refresh the list of expenses after deletion
-            LoadData();
+            await LoadData();
 
             CloseDeleteModal();
         }

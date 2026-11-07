@@ -44,6 +44,7 @@ namespace FinanceApp.Infrastructure.Services
                 query = query.Where(t => t.Date <= endDate.Value);
             }
             return await query
+                //.AsNoTracking() // To improve performance since we don't need to track changes for read-only operations
                 .Include(t => t.Account) // To get the account details associated with each transaction
                 .Include(t => t.Category) // To get the category details associated with each transaction
                 .ToListAsync();
@@ -59,7 +60,25 @@ namespace FinanceApp.Infrastructure.Services
         // Update an existing transaction
         public async Task UpdateTransactionAsync(Transaction transaction)
         {
-            _context.Transactions.Update(transaction);
+            //_context.Transactions.Update(transaction);
+
+            // Getting the transaction from the database to avoid tracking issues when updating an entity that is already being tracked by the context.
+            var selectedTranaction = await _context.Transactions.FindAsync(transaction.Id);
+
+            // Updating values individually to avoid tracking issues when updating an entity that is already being tracked by the context.
+            if (selectedTranaction != null)
+            {
+                selectedTranaction.Amount = transaction.Amount;
+                selectedTranaction.Date = transaction.Date;
+                selectedTranaction.AccountId = transaction.AccountId;
+                selectedTranaction.Account = transaction.Account;
+                selectedTranaction.Category = transaction.Category;
+                selectedTranaction.CategoryId = transaction.CategoryId;
+                selectedTranaction.Notes = transaction.Notes;
+                selectedTranaction.Type = transaction.Type;
+                selectedTranaction.Description = transaction.Description;
+            }
+
             await _context.SaveChangesAsync();
         }
 
@@ -86,6 +105,7 @@ namespace FinanceApp.Infrastructure.Services
             var endDate = startDate.AddMonths(1); // First day of the *next* month
 
             return await _context.Transactions
+                //.AsNoTracking() // To improve performance since we don't need to track changes for read-only operations
                 .Include(t => t.Account) // To get the account details associated with each transaction
                 .Include(t => t.Category) // To get the category details associated with each transaction
                 .Where(t => t.Date >= startDate && t.Date < endDate)
@@ -104,6 +124,7 @@ namespace FinanceApp.Infrastructure.Services
             var endDate = startDate.AddMonths(1); // First day of the *next* month
 
             return await _context.Transactions
+                .AsNoTracking() // To improve performance since we don't need to track changes for read-only operations
                 .Include(t => t.Account) // To get the account details associated with each transaction
                 .Include(t => t.Category) // To get the category details associated with each transaction
                 .Where(t => t.Date >= startDate && t.Date < endDate)
