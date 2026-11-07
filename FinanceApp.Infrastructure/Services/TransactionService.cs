@@ -90,6 +90,7 @@ namespace FinanceApp.Infrastructure.Services
                 .Include(t => t.Category) // To get the category details associated with each transaction
                 .Where(t => t.Date >= startDate && t.Date < endDate)
                 .Where(t => t.Type == Domain.Enums.TransactionType.Expense)
+                .OrderByDescending(t => t.Date) // <-- Sorts by date (newest first)
                 .ToListAsync();
         }
 
