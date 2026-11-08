@@ -143,7 +143,6 @@
                                 { <option value="@account.Id">@account.Name</option> }
                         }
                         else { <option disabled>No accounts available</option> }
-                        )
 
                     </select>
                 </div>
@@ -159,11 +158,7 @@
                                 <option value="@category.Id">@category.Name</option>
                             }
                         }
-                        else
-                        {
-                            <option disabled>No categories available</option>
-                        }
-                        )
+                        else { <option disabled>No categories available</option> }
 
                     </select>
                 </div>
@@ -300,6 +295,14 @@
     // Method to save the expense, either by adding a new one or updating an existing one based on the isEditing flag. After saving, it closes the modal and refreshes the list of expenses.
     private async Task SaveExpense()
     {
+        // Validate the activeExpense model before saving. You can add more validation logic as needed.
+        if (string.IsNullOrWhiteSpace(activeExpense.Description) || activeExpense.Amount <= 0 || activeExpense.AccountId <= 0 || activeExpense.CategoryId <= 0 || activeExpense.Date == default)
+        {
+            // Asking the user to fill in the required fields. You can implement a more user-friendly validation message or UI feedback here.
+            // Show an error message or handle validation failure as needed
+            return;
+        }
+
         if (isEditing)
         {
             // If editing, update the existing expense; otherwise, add a new expense
