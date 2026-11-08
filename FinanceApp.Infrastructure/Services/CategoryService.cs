@@ -20,9 +20,25 @@ namespace FinanceApp.Infrastructure.Services
         }
 
         // Getting all the categories (to use in the dropdown list)
-        public async Task<List<Account>> GetAllCategoriesAsync()
+        public async Task<List<Category>> GetAllCategoriesAsync()
         {
-            return await _context.Accounts.ToListAsync();
+            return await _context.Categories.ToListAsync();
+        }
+
+        // Getting only expense categories (to use in the dropdown list)
+        public async Task<List<Category>> GetExpenseCategoriesAsync()
+        {
+            return await _context.Categories
+                .Where(c => c.TransactionType == Domain.Enums.TransactionType.Expense)
+                .ToListAsync();
+        }
+
+        // Getting only income categories (to use in the dropdown list)
+        public async Task<List<Category>> GetIncomeCategoriesAsync()
+        {
+            return await _context.Categories
+                .Where(c => c.TransactionType == Domain.Enums.TransactionType.Income)
+                .ToListAsync();
         }
 
         // Add a new category

@@ -6,6 +6,7 @@
 
 @inject AccountService AccountService
 @inject TransactionService TransactionService
+@inject CategoryService CategoryService
 
 <div class="space-y-6 max-w-full overflow-hidden">
     <!-- Header & Action Button -->
@@ -99,7 +100,6 @@
 </div>
 
 <!-- Add/Edit Expense Modal Dialog. Only true when the button is clicked-->
-
 @if (isModalOpen)
 {
     <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 overflow-y-auto">
@@ -148,6 +148,26 @@
                     </select>
                 </div>
                 <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Category</label>
+                    <select @bind="activeExpense.CategoryId" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 cursor-pointer">
+
+                        @* Get dynamic account names from the database or service in the future. For now, hardcoded options are used. *@
+                        @if (categories != null && categories.Any())
+                        {
+                            @foreach (var category in categories)
+                            {
+                                <option value="@category.Id">@category.Name</option>
+                            }
+                        }
+                        else
+                        {
+                            <option disabled>No categories available</option>
+                        }
+                        )
+
+                    </select>
+                </div>
+                <div>
                     <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Notes (Optional)</label>
                     <textarea @bind="activeExpense.Notes" rows="2" placeholder="Add any details..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 resize-none"></textarea>
                 </div>
@@ -189,6 +209,7 @@
 @code {
     private List<Transaction>? expenses;
     private List<Account>? accounts; // This will hold the list of accounts fetched from the AccountService. It is used to populate the dropdown in the add expense modal.
+    private List<Category>? categories; // This will hold the list of categories fetched from the CategoryService. It is used to populate the dropdown in the add expense modal.
     private int? expandedRowId = null;
 
     // Modal states
@@ -210,6 +231,7 @@
     {
         expenses = await TransactionService.GetExpensesForMonthAsync();
         accounts = await AccountService.GetAllAccountsAsync();
+        categories = await CategoryService.GetExpenseCategoriesAsync(); // Fetch categories for future use in the modal (only of expense type)
     }
 
     // Toggle the expanded state of a row based on its ID. If the row is already expanded, collapse it; otherwise, expand it.
@@ -282,6 +304,7 @@
         {
             // If editing, update the existing expense; otherwise, add a new expense
             await TransactionService.UpdateTransactionAsync(activeExpense);
+            isEditing = false; // Reset the edit mode flag after saving
         }
         else
         {

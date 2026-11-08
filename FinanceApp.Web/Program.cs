@@ -19,6 +19,7 @@ builder.Services.AddDbContext<FinanceDbContext>(
 // Adding the services
 builder.Services.AddScoped<AccountService>(); //Accounts service
 builder.Services.AddScoped<TransactionService>(); //Transactions service
+builder.Services.AddScoped<CategoryService>(); //Categories service
 
 var app = builder.Build();
 
