@@ -8,104 +8,107 @@
 @inject TransactionService TransactionService
 @inject CategoryService CategoryService
 
-<div class="space-y-6 max-w-full overflow-hidden">
+<div class="space-y-6 max-w-[1000px] w-full mx-auto px-4 sm:px-0">
     <!-- Header & Action Button -->
     <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-white">Expenses</h1>
+            <h1 class="text-2xl font-bold text-white tracking-tight">Expenses</h1>
             <p class="text-sm text-slate-400">View and manage monthly expenses</p>
         </div>
-        <!--This is the button used to open the add new expense window-->
-        <button @onclick="OpenAddModal" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2 rounded-xl text-sm transition-all shadow-lg shadow-emerald-900/30 flex items-center gap-2">
+        <button @onclick="OpenAddModal" class="bg-slate-100 hover:bg-white text-slate-950 font-medium px-4 py-2 rounded-xl text-sm transition-all shadow-lg flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
             Add Expense
         </button>
     </header>
 
-    <!-- Content Card Container with Responsive Min-Width & Scroll -->
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xl overflow-x-auto">
-        @if (expenses == null)
-        {
-            <p class="text-slate-400 py-4">Loading expenses...</p>
-        }
-        else if (!expenses.Any())
-        {
-            <p class="text-slate-400 py-4">No expenses found for this month.</p>
-        }
-        @* When expenses have been retrieved from the database. Not empty *@
-        else
-        {
-            <table class="w-full text-left border-collapse text-sm min-w-[650px]">
-                <thead>
-                    <tr class="border-b border-slate-800 text-slate-400 uppercase text-xs">
-                        <th class="p-3">Date</th>
-                        <th class="p-3">Description</th>
-                        <th class="p-3 text-right">Amount</th>
-                        <th class="p-3 text-center w-12">Action</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-800/60">
-                    @foreach (var transaction in expenses)
-                    {
-                        // Check if the current row is expanded. This is done by comparing the current transaction's Id with the expandedRowId. If they match, it means this row is currently expanded and should show its details. Otherwise, it remains collapsed.
-                        // When the user clicks on a row, the ToggleRow method is called, which updates the expandedRowId. If the same row is clicked again, it collapses by setting expandedRowId to null.
-                        bool isExpanded = expandedRowId == transaction.Id; 
+    <!-- Content List Container with Minimum Width Wrapper for Consistency -->
+    <div class="w-full pb-2">
+        <div class="space-y-3">
+            @if (expenses == null)
+            {
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center text-slate-400">Loading expenses...</div>
+            }
+            else if (!expenses.Any())
+            {
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center text-slate-400">No expenses found for this month.</div>
+            }
+            else
+            {
+                @foreach (var transaction in expenses)
+                {
+                    bool isExpanded = expandedRowId == transaction.Id;
 
-                        <!-- Main Row (Clickable) -->
-                        <tr @onclick="() => ToggleRow(transaction.Id)" class="cursor-pointer text-slate-300 hover:bg-slate-800/40 transition-colors @(isExpanded ? "bg-slate-800/50" : "")">
-                            <td class="p-3 font-semibold">@transaction.Date.ToString("dd/MM/yyyy")</td>
-                            <td class="p-3 font-medium text-white">@transaction.Description</td>
-                            <td class="p-3 text-right text-rose-400 font-medium">£@transaction.Amount.ToString("N2")</td>
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl transition-all overflow-hidden shadow-sm hover:border-slate-700">
+                        <!-- Main Clickable Row. Stacks vertically on sm+ (smaller displays) -->
+                        <div @onclick="() => ToggleRow(transaction.Id)" class="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer select-none">
+                            <!-- Left: Date & Description -->
+                            <div class="flex items-center gap-4 min-w-0">
+                                <div class="text-xs font-semibold text-slate-400 bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-lg shrink-0">
+                                    @transaction.Date.ToString("dd MMM yyyy")
+                                </div>
+                                <div class="min-w-0">
+                                    <h3 class="text-sm font-semibold text-white truncate">@transaction.Description</h3>
+                                    <p class="text-xs text-slate-500 mt-0.5">Click to view details</p>
+                                </div>
+                            </div>
 
-                            <!-- Action buttons use stopPropagation so clicking them doesn't toggle the row -->
-                            <td class="p-3 text-center" @onclick:stopPropagation="true">
-                                <div class="flex items-center justify-center gap-2">
-                                    <!-- Edit Button -->
-                                    <button @onclick="() => OpenEditModal(transaction)" class="p-1.5 bg-slate-800 hover:bg-blue-600/20 text-slate-400 hover:text-blue-400 rounded-lg transition-colors" title="Edit">
+                            <!-- Right: Amount & Actions -->
+                            @* <div class="flex items-center gap-4 shrink-0" @onclick:stopPropagation="true"> *@
+                            <div class="flex items-center justify-between sm:justify-end gap-4 shrink-0 pt-2 sm:pt-0 border-t border-slate-800/40 sm:border-t-0" @onclick:stopPropagation="true">
+                                <span class="text-sm font-bold text-slate-200">£@transaction.Amount.ToString("N2")</span>
+
+                                <div class="flex items-center gap-1.5">
+                                    <button @onclick="() => OpenEditModal(transaction)" class="p-2 bg-slate-800/60 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg transition-colors" title="Edit">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                     </button>
-                                    <!-- Delete Button -->
-                                    <button @onclick="() => PromptDelete(transaction)" class="p-1.5 bg-slate-800 hover:bg-rose-600/20 text-slate-400 hover:text-rose-400 rounded-lg transition-colors" title="Delete">
+                                    <button @onclick="() => PromptDelete(transaction)" class="p-2 bg-slate-800/60 hover:bg-slate-800 text-slate-400 hover:text-rose-400 rounded-lg transition-colors" title="Delete">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                     </button>
-                                    <!-- Chevron Indicator -->
-                                    @* <svg class="w-4 h-4 text-slate-500 transform transition-transform @(isExpanded ? "rotate-180" : "") ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg> *@
                                 </div>
-                            </td>
-                        </tr>
+                            </div>
+                        </div>
 
-                        <!-- Expandable Details Accordion Row -->
+                        <!-- Expandable Details Section (Colored Pills, No Headers) -->
                         @if (isExpanded)
                         {
-                            <tr class="bg-slate-950/40">
-                                <td colspan="4" class="p-4">
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-slate-400 bg-slate-900/80 border border-slate-800/80 p-4 rounded-xl">
-                                        <div>
-                                            <span class="block uppercase font-semibold text-slate-500">Account / Source</span>
-                                            <span class="text-white font-medium text-sm mt-0.5 block">@(string.IsNullOrEmpty(transaction.Account.Name) ? "Default Account" : transaction.Account.Name)</span>
-                                        </div>
-                                        <div>
-                                            <span class="block uppercase font-semibold text-slate-500">Notes / Remarks</span>
-                                            <span class="text-slate-300 text-sm mt-0.5 block">@(string.IsNullOrEmpty(transaction.Notes) ? "No additional notes provided." : transaction.Notes)</span>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
+                            <div class="px-5 pb-5 pt-3 border-t border-slate-800/60 bg-slate-950/40 space-y-4">
+                                <div class="flex flex-wrap items-center gap-3">
+                                    <!-- Account Pill (Emerald Tint) -->
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-2"></span>
+                                        @(transaction.Account?.Name ?? "Default")
+                                    </span>
+
+                                    <!-- Category Pill (Indigo Tint) -->
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 mr-2"></span>
+                                        @(transaction.Category?.Name ?? "Unassigned")
+                                    </span>
+                                </div>
+
+                                <!-- Notes -->
+                                <div>
+                                    <span class="block uppercase font-semibold text-slate-500 mb-1 text-xs">Notes / Remarks</span>
+                                    <p class="text-slate-300 text-sm bg-slate-900 border border-slate-800/80 p-3 rounded-xl break-words whitespace-pre-wrap">
+                                        @(string.IsNullOrEmpty(transaction.Notes) ? "No additional notes provided." : transaction.Notes)
+                                    </p>
+                                </div>
+                            </div>
                         }
-                    }
-                </tbody>
-            </table>
-        }
+                    </div>
+                }
+            }
+        </div>
     </div>
 </div>
 
-<!-- Add/Edit Expense Modal Dialog. Only true when the button is clicked-->
+<!-- Add/Edit Expense Modal Dialog -->
 @if (isModalOpen)
 {
     <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 overflow-y-auto">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-6">
             <div class="flex justify-between items-center border-b border-slate-800 pb-4">
-                <h3 class="text-lg font-bold text-white">Add New Expense</h3>
+                <h3 class="text-lg font-bold text-white">@(isEditing ? "Edit Expense" : "Add New Expense")</h3>
                 <button @onclick="CloseAddModal" class="text-slate-400 hover:text-white">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
@@ -114,43 +117,41 @@
             <!-- Form Inputs -->
             <div class="space-y-4">
                 <div>
-                    @* Shows the description of the expense *@
                     <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Description</label>
-                    <input type="text" @bind="activeExpense.Description" placeholder="e.g., Grocery shopping" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500" />
+                    <input type="text" @bind="activeExpense.Description" placeholder="e.g., Grocery shopping" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-slate-500" />
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        @* Shows the amount of the expense. *@
                         <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Amount (£)</label>
-                        <input type="number" step="0.01" @bind="activeExpense.Amount" placeholder="0.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500" />
+                        <input type="number" step="0.01" @bind="activeExpense.Amount" placeholder="0.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-slate-500" />
                     </div>
                     <div>
-                        @* Date *@
                         <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Date</label>
-                        <input type="date" @bind="activeExpense.Date" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500" />
+                        <input type="date" @bind="activeExpense.Date" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-slate-500" />
                     </div>
-
                 </div>
+
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Account</label>
-                    <select @bind="activeExpense.AccountId" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 cursor-pointer">
-                        
-                        @* Get dynamic account names from the database or service in the future. For now, hardcoded options are used. *@
+                    <select @bind="activeExpense.AccountId" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-slate-500 cursor-pointer">
                         @if (accounts != null && accounts.Any())
                         {
                             @foreach (var account in accounts)
-                                { <option value="@account.Id">@account.Name</option> }
+                            {
+                                <option value="@account.Id">@account.Name</option>
+                            }
                         }
-                        else { <option disabled>No accounts available</option> }
-
+                        else
+                        {
+                            <option disabled>No accounts available</option>
+                        }
                     </select>
                 </div>
+
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Category</label>
-                    <select @bind="activeExpense.CategoryId" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 cursor-pointer">
-
-                        @* Get dynamic account names from the database or service in the future. For now, hardcoded options are used. *@
+                    <select @bind="activeExpense.CategoryId" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-slate-500 cursor-pointer">
                         @if (categories != null && categories.Any())
                         {
                             @foreach (var category in categories)
@@ -158,13 +159,16 @@
                                 <option value="@category.Id">@category.Name</option>
                             }
                         }
-                        else { <option disabled>No categories available</option> }
-
+                        else
+                        {
+                            <option disabled>No categories available</option>
+                        }
                     </select>
                 </div>
+
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Notes (Optional)</label>
-                    <textarea @bind="activeExpense.Notes" rows="2" placeholder="Add any details..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 resize-none"></textarea>
+                    <textarea @bind="activeExpense.Notes" rows="2" placeholder="Add any details..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-slate-500 resize-none"></textarea>
                 </div>
             </div>
 
@@ -173,7 +177,7 @@
                 <button @onclick="CloseAddModal" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
                     Cancel
                 </button>
-                <button @onclick="SaveExpense" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-5 py-2 rounded-xl text-sm transition-all shadow-lg shadow-emerald-900/30">
+                <button @onclick="SaveExpense" class="bg-slate-100 hover:bg-white text-slate-950 font-medium px-5 py-2 rounded-xl text-sm transition-all shadow-lg">
                     @(isEditing ? "Update Expense" : "Save Expense")
                 </button>
             </div>
@@ -193,7 +197,7 @@
                 <button @onclick="CloseDeleteModal" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
                     Cancel
                 </button>
-                <button @onclick="ConfirmDelete" class="bg-rose-600 hover:bg-rose-500 text-white font-medium px-5 py-2 rounded-xl text-sm transition-all shadow-lg shadow-rose-900/30">
+                <button @onclick="ConfirmDelete" class="bg-slate-100 hover:bg-white text-slate-950 font-medium px-5 py-2 rounded-xl text-sm transition-all shadow-lg">
                     Delete
                 </button>
             </div>
@@ -203,55 +207,48 @@
 
 @code {
     private List<Transaction>? expenses;
-    private List<Account>? accounts; // This will hold the list of accounts fetched from the AccountService. It is used to populate the dropdown in the add expense modal.
-    private List<Category>? categories; // This will hold the list of categories fetched from the CategoryService. It is used to populate the dropdown in the add expense modal.
+    private List<Account>? accounts;
+    private List<Category>? categories;
     private int? expandedRowId = null;
 
-    // Modal states
     private bool isModalOpen = false;
     private bool isDeleteModalOpen = false;
-    private bool isEditing = false; // Flag to determine if the modal is in edit mode
+    private bool isEditing = false;
 
-    // Model shared for both adding and editing expenses. This will hold the data for the new or edited expense.
     private Transaction activeExpense = new();
-    private Transaction? expenseToDelete = null; // Holds the expense that is selected for deletion.
+    private Transaction? expenseToDelete = null;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
     }
 
-    // Load expenses and accounts from the respective services. This method is called during component initialization to fetch the necessary data for display and interaction.
     private async Task LoadData()
     {
         expenses = await TransactionService.GetExpensesForMonthAsync();
         accounts = await AccountService.GetAllAccountsAsync();
-        categories = await CategoryService.GetExpenseCategoriesAsync(); // Fetch categories for future use in the modal (only of expense type)
+        categories = await CategoryService.GetExpenseCategoriesAsync();
     }
 
-    // Toggle the expanded state of a row based on its ID. If the row is already expanded, collapse it; otherwise, expand it.
     private void ToggleRow(int id)
     {
-        // If the clicked row is already expanded, collapse it by setting expandedRowId to null. Otherwise, set expandedRowId to the clicked row's ID to expand it.
         if (expandedRowId == id) { expandedRowId = null; }
         else { expandedRowId = id; }
     }
 
-
-    // Models for opening and closing the add expense modal. When opening the modal, the activeExpense model is reset to default values for adding a new expense. When editing, it populates the activeExpense model with the selected expense's data.
     private void OpenAddModal()
     {
-        // Reset the newExpense model to default values when opening the modal
-        activeExpense = new Transaction { AccountId = 1 , Date = DateTime.Today, Type = Domain.Enums.TransactionType.Expense };
+        activeExpense = new Transaction { AccountId = accounts?.FirstOrDefault()?.Id ?? 1, CategoryId = categories?.FirstOrDefault()?.Id ?? 1, Date = DateTime.Today, Type = Domain.Enums.TransactionType.Expense };
+        isEditing = false;
         isModalOpen = true;
     }
 
     private void CloseAddModal()
     {
         isModalOpen = false;
+        isEditing = false;
     }
 
-    // Model for editing an existing expense. It populates the activeExpense model with the selected expense's data and opens the modal in edit mode.
     private void OpenEditModal(Transaction expense)
     {
         activeExpense = new Transaction
@@ -261,78 +258,54 @@
             Amount = expense.Amount,
             Date = expense.Date,
             AccountId = expense.AccountId,
-            Account = expense.Account,
             CategoryId = expense.CategoryId,
-            Category = expense.Category,
             Notes = expense.Notes,
             Type = Domain.Enums.TransactionType.Expense
         };
 
-        isEditing = true; // Set the flag to indicate that we are in edit mode
+        isEditing = true;
         isModalOpen = true;
     }
 
-    private void CloseEditModal()
-    {
-        isModalOpen = false;
-        isEditing = false; // Reset the edit mode flag when closing the modal
-    }
-
-    // Method to prompt the user for deletion confirmation. It sets the expenseToDelete variable to the selected expense and opens the delete confirmation modal.
     private void PromptDelete(Transaction expense)
     {
-        expenseToDelete = expense; // Set the expense to delete
-        isDeleteModalOpen = true; // Open the delete confirmation modal
+        expenseToDelete = expense;
+        isDeleteModalOpen = true;
     }
 
-    // To close the delete modal window
     private void CloseDeleteModal()
     {
         isDeleteModalOpen = false;
-        expenseToDelete = null; // Reset the expense to delete when closing the modal
+        expenseToDelete = null;
     }
 
-    // Method to save the expense, either by adding a new one or updating an existing one based on the isEditing flag. After saving, it closes the modal and refreshes the list of expenses.
     private async Task SaveExpense()
     {
-        // Validate the activeExpense model before saving. You can add more validation logic as needed.
         if (string.IsNullOrWhiteSpace(activeExpense.Description) || activeExpense.Amount <= 0 || activeExpense.AccountId <= 0 || activeExpense.CategoryId <= 0 || activeExpense.Date == default)
         {
-            // Asking the user to fill in the required fields. You can implement a more user-friendly validation message or UI feedback here.
-            // Show an error message or handle validation failure as needed
             return;
         }
 
         if (isEditing)
         {
-            // If editing, update the existing expense; otherwise, add a new expense
             await TransactionService.UpdateTransactionAsync(activeExpense);
-            isEditing = false; // Reset the edit mode flag after saving
         }
         else
         {
-            // If adding a new expense, call the service to add it.
             await TransactionService.AddTransactionAsync(activeExpense);
         }
 
-
         isModalOpen = false;
-        // Refresh your list here if needed
+        isEditing = false;
         await LoadData();
-        // expenses = await TransactionService.GetExpensesForMonthAsync();
     }
 
-    // Method to delete the expense after user confirmation
     private async Task ConfirmDelete()
     {
         if (expenseToDelete != null)
         {
-            // Delete the expense using the service
             await TransactionService.DeleteTransactionAsync(expenseToDelete.Id);
-
-            // refresh the list of expenses after deletion
             await LoadData();
-
             CloseDeleteModal();
         }
     }
