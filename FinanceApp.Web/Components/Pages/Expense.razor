@@ -1,5 +1,4 @@
 ﻿@page "/expense"
-@* @rendermode InteractiveServer *@
 @using FinanceApp.Domain.Models
 @using FinanceApp.Infrastructure.Data
 @using FinanceApp.Infrastructure.Services
@@ -53,7 +52,6 @@
                             </div>
 
                             <!-- Right: Amount & Actions -->
-                            @* <div class="flex items-center gap-4 shrink-0" @onclick:stopPropagation="true"> *@
                             <div class="flex items-center justify-between sm:justify-end gap-4 shrink-0 pt-2 sm:pt-0 border-t border-slate-800/40 sm:border-t-0" @onclick:stopPropagation="true">
                                 <span class="text-sm font-bold text-slate-200">£@transaction.Amount.ToString("N2")</span>
 

@@ -4,10 +4,10 @@
 @using FinanceApp.Infrastructure.Services
 @inject AccountService AccountService
 
-<h3>Accounts</h3>
+@* <h3>Accounts</h3> *@
 
 
-@if (accounts == null)
+@* @if (accounts == null)
 {
     <p>Loading accounts...</p>
 }
@@ -44,4 +44,272 @@ else
     {
         accounts = await AccountService.GetAllAccountsAsync();
     }
+} *@
+
+
+<div class="space-y-6 max-w-[1000px] w-full mx-auto px-4 sm:px-0">
+    <!-- Header & Action Button -->
+    <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-white tracking-tight">Accounts</h1>
+            <p class="text-sm text-slate-400">View and manage accounts</p>
+        </div>
+        <button @onclick="OpenAddModal" class="bg-slate-100 hover:bg-white text-slate-950 font-medium px-4 py-2 rounded-xl text-sm transition-all shadow-lg flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Add Account
+        </button>
+    </header>
+
+    <!-- Content List Container with Minimum Width Wrapper for Consistency -->
+    <div class="w-full pb-2">
+        <div class="space-y-3">
+            <!-- Account List -->
+            @if (accounts == null)
+            {
+                <p class="text-slate-400">Loading accounts...</p>
+            }
+            else if (!accounts.Any())
+            {
+                <p class="text-slate-400">No accounts found yet.</p>
+            }
+            else
+            {
+                <div class="space-y-3">
+                    @foreach (var account in accounts)
+                    {
+                        <div class="bg-slate-900 border border-slate-800 rounded-2xl transition-all overflow-hidden shadow-sm hover:border-slate-700">
+                            <!-- Account card. Stacks vertically on sm+ (smaller displays) -->
+                            <div class="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer select-none">
+
+                                <!-- Left: Account type and name -->
+                                @* Shows the account type as a small badege on the left, followed by the account name. The account name is truncated if it's too long to fit in the available space. *@
+                                <div class="flex items-center gap-4 min-w-0">
+                                    <div class="text-xs font-semibold text-slate-400 bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-lg shrink-0">
+                                        @account.AccountType
+                                    </div>
+                                    <div class="min-w-0">
+                                        <h3 class="text-sm font-semibold text-white truncate">@account.Name</h3>
+                                        <p class="text-xs text-slate-500 mt-0.5">Click to view details</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Right: Account balance & Actions -->
+                                <div class="flex items-center justify-between sm:justify-end gap-4 shrink-0 pt-2 sm:pt-0 border-t border-slate-800/40 sm:border-t-0" @onclick:stopPropagation="true">
+                                    <span class="text-sm font-bold text-slate-200">£@account.Balance.ToString("N2")</span>
+
+                                     <!-- Action buttons for editing and deleting the account -->           
+                                     <div class="flex items-center gap-1.5">
+                                        <button @onclick="() => OpenEditModal(account)" class="p-2 bg-slate-800/60 hover:bg-slate-800 text-slate-400 hover:text-white rounded-lg transition-colors" title="Edit">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                        </button>
+                                        <button @onclick="() => PromptDelete(account)" class="p-2 bg-slate-800/60 hover:bg-slate-800 text-slate-400 hover:text-rose-400 rounded-lg transition-colors" title="Delete">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                        </button>
+                                     </div>
+
+                                  </div>
+                            </div>
+                        </div>
+            }
+            </div>
+            
+        }
+        </div>
+        </div>
+        </div>
+
+<!-- Add/Edit Account Modal -->
+@if(isModalOpen)
+{
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-6">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-4">
+                <h3 class="text-lg font-bold text-white">@(isEditing ? "Edit Account" : "Add New Account")</h3>
+                <button @onclick="CloseAddModal" class="text-slate-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <!-- Form Inputs -->
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Description</label>
+                    <input type="text" @bind="activeAccount.Name" placeholder="Barclays, Trading 212, Monzo Cash ISA, Fuel Savings Pot" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-slate-500" />
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Amount (£)</label>
+                        <input type="number" step="0.01" @bind="activeAccount.Balance" placeholder="0.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-slate-500" />
+                    </div>
+                    @* <div>
+                        <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Date</label>
+                        <input type="date" @bind="activeAccount.Date" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-slate-500" />
+                    </div> *@
+                </div>
+
+                @* <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Account</label>
+                    <select @bind="activeAccount.AccountId" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-slate-500 cursor-pointer">
+                        @if (accounts != null && accounts.Any())
+                        {
+                            @foreach (var account in accounts)
+                            {
+                                <option value="@account.Id">@account.Name</option>
+                            }
+                        }
+                        else
+                        {
+                            <option disabled>No accounts available</option>
+                        }
+                    </select>
+                </div> *@
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Category</label>
+                    <select @bind="activeAccount.AccountType" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-slate-500 cursor-pointer">
+                        <!-- Populate the dropdown with account types from the AccountType enum -->
+                        @foreach (var type in Enum.GetValues<FinanceApp.Domain.Enums.AccountType>())
+                            {                                
+                                <option value="@type">@type</option>
+                            }
+                    </select>
+                </div>
+
+
+            </div>
+
+            <!-- Modal Actions -->
+            <div class="flex justify-end gap-3 pt-2">
+                <button @onclick="CloseAddModal" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
+                    Cancel
+                </button>
+                <button @onclick="SaveAccount" class="bg-slate-100 hover:bg-white text-slate-950 font-medium px-5 py-2 rounded-xl text-sm transition-all shadow-lg">
+                    @(isEditing ? "Update Account" : "Save Account")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Delete Confirmation Modal Dialog -->
+@if (isDeleteModalOpen)
+{
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-6 shadow-2xl space-y-4">
+            <h3 class="text-lg font-bold text-white">Confirm Deletion</h3>
+            <p class="text-sm text-slate-400">Are you sure you want to delete <span class="text-white font-medium">@accountToDeactivate?.Name</span>? This action cannot be undone.</p>
+
+            <div class="flex justify-end gap-3 pt-2">
+                <button @onclick="CloseDeleteModal" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
+                    Cancel
+                </button>
+                <button @onclick="ConfirmDelete" class="bg-slate-100 hover:bg-white text-slate-950 font-medium px-5 py-2 rounded-xl text-sm transition-all shadow-lg">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+
+@code {
+    private List<Account> accounts = new();
+    private bool isAddModalOpen = false;
+
+    private bool isModalOpen = false;
+    private bool isDeleteModalOpen = false;
+    private bool isEditing = false;
+
+    private Account activeAccount = new();
+    private Account? accountToDeactivate = null;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+    private async Task LoadData()
+    {
+        accounts = await AccountService.GetAllAccountsAsync();
+    }
+
+    private async Task OnAccountAdded()
+    {
+        await LoadData();
+        CloseAddModal();
+    }
+
+    private void OpenAddModal()
+    {
+        activeAccount = new Account();
+        isEditing = false;
+        isModalOpen = true;
+    }
+
+    private void CloseAddModal()
+    {
+        isModalOpen = false;
+        isEditing = false;
+    }
+
+    private void OpenEditModal(Account account)
+    {
+        activeAccount = new Account
+        {
+            Id = account.Id,
+            Name = account.Name,
+            AccountType = account.AccountType,
+            Balance = account.Balance,
+        };
+
+        isEditing = true;
+        isModalOpen = true;
+    }
+
+    private void PromptDelete(Account account)
+    {
+        accountToDeactivate = account;
+        isDeleteModalOpen = true;
+    }
+
+    private void CloseDeleteModal()
+    {
+        isDeleteModalOpen = false;
+        accountToDeactivate = null;
+    }
+
+    private async Task SaveAccount()
+    {
+        if (string.IsNullOrWhiteSpace(activeAccount.Name))
+        {
+            return;
+        }
+
+        if (isEditing)
+        {
+            await AccountService.UpdateAccountAsync(activeAccount);
+            // await TransactionService.UpdateTransactionAsync(activeAccount);
+        }
+        else
+        {
+            await AccountService.AddAccountAsync(activeAccount);
+            // await TransactionService.AddTransactionAsync(activeAccount);
+        }
+
+        isModalOpen = false;
+        isEditing = false;
+        await LoadData();
+    }
+
+    private async Task ConfirmDelete()
+    {
+        if (accountToDeactivate != null)
+        {
+            await AccountService.DeactivateAccountAsync(accountToDeactivate);
+            await LoadData();
+            CloseDeleteModal();
+        }
+    }
+
 }

@@ -11,7 +11,7 @@ namespace FinanceApp.Domain.Models
         public string Name { get; set; }
         public decimal Balance { get; set; }
         public AccountType AccountType { get; set; }
-
+        public Boolean IsActive { get; set; } = true; // Default to true when creating a new account
         // Transactions related to this account
         public List<Transaction> Transactions { get; set; } = new();
     }
