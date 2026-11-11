@@ -82,10 +82,32 @@ namespace FinanceApp.Infrastructure.Services
         // Update an existing transaction
         public async Task UpdateTransactionAsync(Transaction transaction)
         {
-            //_context.Transactions.Update(transaction);
 
             // Getting the transaction from the database to avoid tracking issues when updating an entity that is already being tracked by the context.
             var selectedTranaction = await _context.Transactions.FindAsync(transaction.Id);
+
+            // Updating the account balance based on the difference between the old and new transaction amounts, and the transaction type (expense or income).
+            if (selectedTranaction != null)
+            {
+                // Getting the account associated with the transaction to update its balance based on the transaction type and amount.
+                var account = await _context.Accounts.FindAsync(selectedTranaction.AccountId);
+                if (account != null)
+                {
+                    // If it is an expense, the old expense amount is added back to the balance of the related account, then the new expense is deducted from the balance.
+                    if (selectedTranaction.Type == Domain.Enums.TransactionType.Expense)
+                    {
+                        account.Balance += selectedTranaction.Amount; // Reverting the old expense amount
+                        account.Balance -= transaction.Amount; // Applying the new expense amount
+                    }
+                    //If it is an income, the old income amount is subtracted from the balance of the related account, then the new income is added to the balance
+                    else if (selectedTranaction.Type == Domain.Enums.TransactionType.Income)
+                    {
+                        account.Balance -= selectedTranaction.Amount; // Reverting the old income amount
+                        account.Balance += transaction.Amount; // Applying the new income amount
+                    }
+                    _context.Accounts.Update(account); // Marking the account entity as modified to ensure the changes are saved to the database
+                }
+            }
 
             // Updating values individually to avoid tracking issues when updating an entity that is already being tracked by the context.
             if (selectedTranaction != null)
@@ -101,6 +123,8 @@ namespace FinanceApp.Infrastructure.Services
                 selectedTranaction.Description = transaction.Description;
             }
 
+            // This will mark the transaction entity as modified to ensure the changes are saved to the database.
+            // If there is an issue with any of the logic above, this will throw an exception and the changes will not be saved to the database.
             await _context.SaveChangesAsync();
         }
 
@@ -108,11 +132,28 @@ namespace FinanceApp.Infrastructure.Services
         public async Task DeleteTransactionAsync(int transactionId)
         {
             var transaction = await _context.Transactions.FindAsync(transactionId);
+
+            // Updating the account balance based on the transaction type and amount before deleting the transaction.
             if (transaction != null)
             {
+                var account = await _context.Accounts.FindAsync(transaction.AccountId);
+                if (account != null)
+                {
+                    if (transaction.Type == Domain.Enums.TransactionType.Expense)
+                    {
+                        account.Balance += transaction.Amount; // Reverting the expense amount
+                    }
+                    else if (transaction.Type == Domain.Enums.TransactionType.Income)
+                    {
+                        account.Balance -= transaction.Amount; // Reverting the income amount
+                    }
+                    _context.Accounts.Update(account); // Marking the account entity as modified to ensure the changes are saved to the database
+                }
+
+                // Removing the transaction from the database and saving changes
                 _context.Transactions.Remove(transaction);
                 await _context.SaveChangesAsync();
-            }
+            }            
         }
 
 
