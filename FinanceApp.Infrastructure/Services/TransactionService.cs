@@ -50,9 +50,31 @@ namespace FinanceApp.Infrastructure.Services
                 .ToListAsync();
         }
 
-        // Add a new transaction
+        // Add a new transaction (logic for different accounts and transaction types is handled in the controller)
         public async Task AddTransactionAsync(Transaction transaction)
         {
+            // Reducing the amount from the account balance if it is an expense transaction, and adding it to the account balance if it is an income transaction
+            if (transaction.Type == Domain.Enums.TransactionType.Expense)
+            {
+                var account = await _context.Accounts.FindAsync(transaction.AccountId);
+                if (account != null)
+                {
+                    // Reducing the amount from the balance (this is valid for checking, savings, and credit card accounts, but not for investment accounts)
+                    account.Balance -= transaction.Amount;
+                    _context.Accounts.Update(account); // Marking the account entity as modified to ensure the changes are saved to the database
+                }
+            }
+            else if (transaction.Type == Domain.Enums.TransactionType.Income)
+            {
+                var account = await _context.Accounts.FindAsync(transaction.AccountId);
+                if (account != null)
+                {
+                    account.Balance += transaction.Amount;
+                    _context.Accounts.Update(account); // Marking the account entity as modified to ensure the changes are saved to the database
+                }
+            }
+
+            // Adding the transaction to the database and saving changes
             _context.Transactions.Add(transaction);
             await _context.SaveChangesAsync();
         }
