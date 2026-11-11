@@ -71,8 +71,8 @@ namespace FinanceApp.Infrastructure.Services
                 selectedTranaction.Amount = transaction.Amount;
                 selectedTranaction.Date = transaction.Date;
                 selectedTranaction.AccountId = transaction.AccountId;
-                selectedTranaction.Account = transaction.Account;
-                selectedTranaction.Category = transaction.Category;
+                //selectedTranaction.Account = transaction.Account;
+                //selectedTranaction.Category = transaction.Category;
                 selectedTranaction.CategoryId = transaction.CategoryId;
                 selectedTranaction.Notes = transaction.Notes;
                 selectedTranaction.Type = transaction.Type;
