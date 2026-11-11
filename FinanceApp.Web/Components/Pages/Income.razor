@@ -100,7 +100,7 @@
     </div>
 </div>
 
-<!-- Add/Edit Expense Modal Dialog -->
+<!-- Add/Edit Income Modal Dialog -->
 @if (isModalOpen)
 {
     <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 overflow-y-auto">
@@ -116,23 +116,23 @@
             <div class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Description</label>
-                    <input type="text" @bind="activeExpense.Description" placeholder="e.g., Grocery shopping" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-slate-500" />
+                    <input type="text" @bind="activeIncome.Description" placeholder="e.g., Grocery shopping" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-slate-500" />
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Amount (£)</label>
-                        <input type="number" step="0.01" @bind="activeExpense.Amount" placeholder="0.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-slate-500" />
+                        <input type="number" step="0.01" @bind="activeIncome.Amount" placeholder="0.00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-slate-500" />
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Date</label>
-                        <input type="date" @bind="activeExpense.Date" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-slate-500" />
+                        <input type="date" @bind="activeIncome.Date" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-slate-500" />
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Account</label>
-                    <select @bind="activeExpense.AccountId" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-slate-500 cursor-pointer">
+                    <select @bind="activeIncome.AccountId" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-slate-500 cursor-pointer">
                         @if (accounts != null && accounts.Any())
                         {
                             @foreach (var account in accounts)
@@ -149,7 +149,7 @@
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Category</label>
-                    <select @bind="activeExpense.CategoryId" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-slate-500 cursor-pointer">
+                    <select @bind="activeIncome.CategoryId" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-slate-500 cursor-pointer">
                         @if (categories != null && categories.Any())
                         {
                             @foreach (var category in categories)
@@ -166,7 +166,7 @@
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Notes (Optional)</label>
-                    <textarea @bind="activeExpense.Notes" rows="2" placeholder="Add any details..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-slate-500 resize-none"></textarea>
+                    <textarea @bind="activeIncome.Notes" rows="2" placeholder="Add any details..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-slate-500 resize-none"></textarea>
                 </div>
             </div>
 
@@ -175,8 +175,8 @@
                 <button @onclick="CloseAddModal" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
                     Cancel
                 </button>
-                <button @onclick="SaveExpense" class="bg-slate-100 hover:bg-white text-slate-950 font-medium px-5 py-2 rounded-xl text-sm transition-all shadow-lg">
-                    @(isEditing ? "Update Expense" : "Save Expense")
+                <button @onclick="SaveIncome" class="bg-slate-100 hover:bg-white text-slate-950 font-medium px-5 py-2 rounded-xl text-sm transition-all shadow-lg">
+                    @(isEditing ? "Update Income" : "Save Income")
                 </button>
             </div>
         </div>
@@ -189,7 +189,7 @@
     <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-6 shadow-2xl space-y-4">
             <h3 class="text-lg font-bold text-white">Confirm Deletion</h3>
-            <p class="text-sm text-slate-400">Are you sure you want to delete <span class="text-white font-medium">@expenseToDelete?.Description</span>? This action cannot be undone.</p>
+            <p class="text-sm text-slate-400">Are you sure you want to delete <span class="text-white font-medium">@incomeToDelete?.Description</span>? This action cannot be undone.</p>
 
             <div class="flex justify-end gap-3 pt-2">
                 <button @onclick="CloseDeleteModal" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
@@ -213,8 +213,8 @@
     private bool isDeleteModalOpen = false;
     private bool isEditing = false;
 
-    private Transaction activeExpense = new();
-    private Transaction? expenseToDelete = null;
+    private Transaction activeIncome = new();
+    private Transaction? incomeToDelete = null;
 
     protected override async Task OnInitializedAsync()
     {
@@ -236,7 +236,7 @@
 
     private void OpenAddModal()
     {
-        activeExpense = new Transaction { AccountId = accounts?.FirstOrDefault()?.Id ?? 1, CategoryId = categories?.FirstOrDefault()?.Id ?? 1, Date = DateTime.Today, Type = Domain.Enums.TransactionType.Income };
+        activeIncome = new Transaction { AccountId = accounts?.FirstOrDefault()?.Id ?? 1, CategoryId = categories?.FirstOrDefault()?.Id ?? 1, Date = DateTime.Today, Type = Domain.Enums.TransactionType.Income };
         isEditing = false;
         isModalOpen = true;
     }
@@ -247,17 +247,17 @@
         isEditing = false;
     }
 
-    private void OpenEditModal(Transaction expense)
+    private void OpenEditModal(Transaction income)
     {
-        activeExpense = new Transaction
+        activeIncome = new Transaction
         {
-            Id = expense.Id,
-            Description = expense.Description,
-            Amount = expense.Amount,
-            Date = expense.Date,
-            AccountId = expense.AccountId,
-            CategoryId = expense.CategoryId,
-            Notes = expense.Notes,
+            Id = income.Id,
+            Description = income.Description,
+            Amount = income.Amount,
+            Date = income.Date,
+            AccountId = income.AccountId,
+            CategoryId = income.CategoryId,
+            Notes = income.Notes,
             Type = Domain.Enums.TransactionType.Income
         };
 
@@ -265,32 +265,32 @@
         isModalOpen = true;
     }
 
-    private void PromptDelete(Transaction expense)
+    private void PromptDelete(Transaction income)
     {
-        expenseToDelete = expense;
+        incomeToDelete = income;
         isDeleteModalOpen = true;
     }
 
     private void CloseDeleteModal()
     {
         isDeleteModalOpen = false;
-        expenseToDelete = null;
+        incomeToDelete = null;
     }
 
-    private async Task SaveExpense()
+    private async Task SaveIncome()
     {
-        if (string.IsNullOrWhiteSpace(activeExpense.Description) || activeExpense.Amount <= 0 || activeExpense.AccountId <= 0 || activeExpense.CategoryId <= 0 || activeExpense.Date == default)
+        if (string.IsNullOrWhiteSpace(activeIncome.Description) || activeIncome.Amount <= 0 || activeIncome.AccountId <= 0 || activeIncome.CategoryId <= 0 || activeIncome.Date == default)
         {
             return;
         }
 
         if (isEditing)
         {
-            await TransactionService.UpdateTransactionAsync(activeExpense);
+            await TransactionService.UpdateTransactionAsync(activeIncome);
         }
         else
         {
-            await TransactionService.AddTransactionAsync(activeExpense);
+            await TransactionService.AddTransactionAsync(activeIncome);
         }
 
         isModalOpen = false;
@@ -300,9 +300,9 @@
 
     private async Task ConfirmDelete()
     {
-        if (expenseToDelete != null)
+        if (incomeToDelete != null)
         {
-            await TransactionService.DeleteTransactionAsync(expenseToDelete.Id);
+            await TransactionService.DeleteTransactionAsync(incomeToDelete.Id);
             await LoadData();
             CloseDeleteModal();
         }
